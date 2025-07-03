@@ -1,6 +1,6 @@
-// RyxScript.js - The All-in-One Runtime & Transpiler v0.1.2
+// RyxScript.js - The All-in-One Runtime & Transpiler v0.1.3
 // (c) 2023 [Your Name] - For demonstration purposes
-// FIX: Strips type annotations from `init` and `on` block parameters.
+// FIX: Corrected a typo from `js_code` to `jsCode`.
 
 (function() {
     'use strict';
@@ -175,10 +175,9 @@
                     return '';
                 });
             
-            // *** THE FIRST FIX IS HERE ***
             content = content.replace(/\binit\s*\((.*?)\)\s*->([\s\S]*?)end/g,
                 (match, params, body) => {
-                    const cleanParams = params.replace(/:\s*[\w\d<>]+/g, ''); // Strip types
+                    const cleanParams = params.replace(/:\s*[\w\d<>]+/g, '');
                     return `constructor(${cleanParams}) { super(); ${constructorContent} ${body}}`;
                 });
             
@@ -189,10 +188,9 @@
             content = content.replace(/\btick\s*->([\s\S]*?)end/g, 'tick(delta) {$1}');
             content = content.replace(/\brender\s*->([\s\S]*?)end/g, 'render() {$1}');
             
-            // *** THE SECOND FIX IS HERE ***
             content = content.replace(/\bon\s+'([\w_]+)'\s*\((.*?)\)\s*->([\s\S]*?)end/g,
                 (match, eventName, params, body) => {
-                    const cleanParams = params.replace(/:\s*[\w\d<>]+/g, ''); // Strip types
+                    const cleanParams = params.replace(/:\s*[\w\d<>]+/g, '');
                     return `on_${eventName}(${cleanParams}) {${body}}`;
                 });
 
@@ -206,7 +204,10 @@
         jsCode = jsCode.replace(/\bend\b/g, '}');
         jsCode = jsCode.replace(/\bspawn\s*\((.*?)\)/g, 'Ryx.spawn($1)');
         jsCode = jsCode.replace(/<[\w\d\/]+>/g, '');
-        jsCode = js_code.replace(/(\b[A-Z]\w+)::/g, 'Ryx.$1.');
+
+        // *** THE FIX IS HERE ***
+        // Corrected the variable name from `js_code` to `jsCode` and added the assignment.
+        jsCode = jsCode.replace(/(\b[A-Z]\w+)::/g, 'Ryx.$1.');
 
         return jsCode;
     }
