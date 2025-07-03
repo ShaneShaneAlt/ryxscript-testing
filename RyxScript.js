@@ -1,6 +1,6 @@
-// RyxScript.js - The All-in-One Runtime & Transpiler v0.1.1
-// (c) 2025 [Your Name] - For demonstration purposes
-// FIX: Handles prop/state declarations without initial values.
+// RyxScript.js - The All-in-One Runtime & Transpiler v0.1.2
+// (c) 2023 [Your Name] - For demonstration purposes
+// FIX: Strips type annotations from `init` and `on` block parameters.
 
 (function() {
     'use strict';
@@ -165,22 +165,22 @@
         jsCode = jsCode.replace(/\bentity\s+(\w+)([\s\S]*?)end/g, (match, name, content) => {
             let constructorContent = '';
             
-            // *** THE FIX IS HERE ***
-            // This regex now handles prop/state with or without an initial value.
             content = content.replace(/\b(prop|state)\s+([\w\d]+)\s*:\s*[\w\d<>\/]+(?:\s*=\s*([\s\S]*?))?(?=\n\s*(prop|state|init|tick|render|on|end))/g,
                 (match, type, name, value) => {
                     if (value !== undefined) {
-                        // Has an initial value
                         constructorContent += `this.${name} = ${value.trim()};\n`;
                     } else {
-                        // No initial value, just declare it
                         constructorContent += `this.${name} = undefined;\n`;
                     }
-                    return ''; // Remove the original line
+                    return '';
                 });
             
-            content = content.replace(/\binit\s*\((.*?)\)\s*->([\s\S]*?)end/g, 
-                `constructor($1) { super(); ${constructorContent} $2}`);
+            // *** THE FIRST FIX IS HERE ***
+            content = content.replace(/\binit\s*\((.*?)\)\s*->([\s\S]*?)end/g,
+                (match, params, body) => {
+                    const cleanParams = params.replace(/:\s*[\w\d<>]+/g, ''); // Strip types
+                    return `constructor(${cleanParams}) { super(); ${constructorContent} ${body}}`;
+                });
             
             if (!/constructor/.test(content)) {
                 content = `constructor() { super(); ${constructorContent} }` + content;
@@ -188,7 +188,13 @@
 
             content = content.replace(/\btick\s*->([\s\S]*?)end/g, 'tick(delta) {$1}');
             content = content.replace(/\brender\s*->([\s\S]*?)end/g, 'render() {$1}');
-            content = content.replace(/\bon\s+'([\w_]+)'\s*\((.*?)\)\s*->([\s\S]*?)end/g, 'on_$1($2) {$3}');
+            
+            // *** THE SECOND FIX IS HERE ***
+            content = content.replace(/\bon\s+'([\w_]+)'\s*\((.*?)\)\s*->([\s\S]*?)end/g,
+                (match, eventName, params, body) => {
+                    const cleanParams = params.replace(/:\s*[\w\d<>]+/g, ''); // Strip types
+                    return `on_${eventName}(${cleanParams}) {${body}}`;
+                });
 
             return `class ${name} extends Ryx.Entity {${content}}`;
         });
@@ -200,7 +206,7 @@
         jsCode = jsCode.replace(/\bend\b/g, '}');
         jsCode = jsCode.replace(/\bspawn\s*\((.*?)\)/g, 'Ryx.spawn($1)');
         jsCode = jsCode.replace(/<[\w\d\/]+>/g, '');
-        jsCode = jsCode.replace(/(\b[A-Z]\w+)::/g, 'Ryx.$1.');
+        jsCode = js_code.replace(/(\b[A-Z]\w+)::/g, 'Ryx.$1.');
 
         return jsCode;
     }
@@ -228,7 +234,7 @@
 
             } catch (error) {
                 console.error(`Error processing RyxScript file ${script.src}:`, error);
-                return; // Stop processing on error
+                return;
             }
         }
         
