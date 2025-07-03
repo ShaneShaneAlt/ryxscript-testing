@@ -1,0 +1,47 @@
+// app.ryx - A simple demo for RyxScript
+
+// A bouncing ball entity
+entity Bouncer
+    prop radius: float<px> = 10.0<px>
+    prop color: Color
+
+    state position: Vector2
+    state velocity: Vector2
+
+    init(startPos: Vector2, startVel: Vector2) ->
+        this.position = startPos
+        this.velocity = startVel
+        // A simple way to get a random color
+        this.color = Color(Math.random()*255, Math.random()*255, Math.random()*255)
+    end
+
+    tick ->
+        this.position = this.position.add(this.velocity.multiply(delta))
+        
+        if this.position.x > Gfx::width or this.position.x < 0 then
+            this.velocity.x *= -1
+        end
+        if this.position.y > Gfx::height or this.position.y < 0 then
+            this.velocity.y *= -1
+        end
+    end
+
+    render ->
+        Gfx::fill(this.color)
+        Gfx::noStroke()
+        Gfx::drawCircle(this.position, this.radius)
+    end
+end
+
+// The main entry point for the application
+main ->
+    Gfx::setResolution(800, 600)
+    Gfx::setBackground(Color::fromHex("#1a1c2c"))
+
+    // Spawn 50 bouncers in random locations
+    loop i from 0 to 50 ->
+        let randPos = Vector2(Math.random() * 800, Math.random() * 600)
+        let randVel = Vector2(Math.random() * 200 - 100, Math.random() * 200 - 100)
+        spawn(Bouncer, randPos, randVel)
+    end
+end
